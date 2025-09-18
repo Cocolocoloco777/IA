@@ -16,9 +16,9 @@
 In search.py, you will implement generic search algorithms which are called by
 Pacman agents (in searchAgents.py).
 
-Name student 1: ...
-Name student 2: ...
-IA lab group and pair: gggg - mm
+Name student 1: Rocío Martín Campoy
+Name student 2: Pablo Fernández Izquierdo
+IA lab group and pair: gggg - 13
 
 """
 
@@ -88,28 +88,29 @@ def depthFirstSearch(search_problem):
 
     To get started, you might want to try some of these simple commands to
     understand the search problem that is being passed in:
-
+    """
     print("Start:", search_problem.getStartState())
     print("Is the start a goal?", search_problem.isGoalState(search_problem.getStartState()))
     print("Start's successors:", search_problem.getSuccessors(search_problem.getStartState()))
-    """
+    
     structure = util.Stack()
-    structure.push("""YOUR CODE HERE""") # DEFINE THE INITIAL STATE
+    structure.push([[search_problem.getStartState()], []]) # DEFINE THE INITIAL STATE
     visited = []
 
     while not structure.isEmpty():
         path = structure.pop()
-        current_state = """YOUR CODE HERE""" # INDEX THE CURRENT STATE
+        current_state = path[0][-1] 
 
         if search_problem.isGoalState(current_state):
-            return """YOUR CODE HERE""" # RETURN THE PATH OF STATES
+            return path[1] 
 
         if current_state not in visited:
             visited.append(current_state)
 
             for successor in search_problem.getSuccessors(current_state):
                 if successor[0] not in visited:
-                    new_path = """YOUR CODE HERE""" # CREATE THE NEW PATH OF STATES
+                    
+                    new_path = [path[0] + [successor[0]], path[1] + [successor[1]]]
                     structure.push(new_path)
 
     return None
