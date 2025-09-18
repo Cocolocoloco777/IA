@@ -172,8 +172,41 @@ def depthFirstSearchExpandVisited(search_problem):
 
 def breadthFirstSearch(search_problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    
+    # The Path is composed of two lists, one of the coordinates of each step and another of the directions taken
+    structure = util.Queue()
+
+    # Insert the initial path with the initial node and no directions
+    structure.push([[search_problem.getStartState()], []]) 
+
+    # List of visited nodes
+    visited = []
+
+    while not structure.isEmpty():
+
+        # Get the last path that entered into the stack
+        path = structure.pop()
+
+        # Get the current state of the path
+        current_state = path[0][-1] 
+
+        # Check the end condition and return the directions only
+        if search_problem.isGoalState(current_state):
+            return path[1] 
+
+        # Visit the current state
+        if current_state not in visited:
+            visited.append(current_state)
+
+            # Loop through the not visited successors of the current state
+            for successor in search_problem.getSuccessors(current_state):
+                if successor[0] not in visited:
+                    
+                    # Create a new path with the successor node and push it into the stack
+                    new_path = [path[0] + [successor[0]], path[1] + [successor[1]]]
+                    structure.push(new_path)
+
+    return None
 
 
 def uniformCostSearch(search_problem):
