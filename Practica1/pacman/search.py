@@ -132,7 +132,7 @@ def genericSearch(search_problem, structure):
     
     # The Path is composed of two lists, one of the coordinates of each step and another of the directions taken
     # Insert the initial path with the initial node and no directions
-    structure.push([[search_problem.getStartState()], []]) 
+    structure.push([[search_problem.getStartState()], [], 1]) 
 
     # List of visited nodes
     visited = []
@@ -158,7 +158,7 @@ def genericSearch(search_problem, structure):
                 if successor[0] not in visited:
                     
                     # Create a new path with the successor node and push it into the stack
-                    new_path = [path[0] + [successor[0]], path[1] + [successor[1]]]
+                    new_path = [path[0] + [successor[0]], path[1] + [successor[1]], successor[2]]
                     structure.push(new_path)
 
     return None
@@ -174,8 +174,10 @@ def breadthFirstSearch(search_problem):
 
 def uniformCostSearch(search_problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    
+    # Lambda function that retrieves the cost of visiting the successor
+    priority_function = lambda path: path[2]
+    return genericSearch(search_problem, util.PriorityQueueWithFunction(priority_function))
 
 
 def nullHeuristic(state, search_problem=None):
