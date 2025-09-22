@@ -158,7 +158,7 @@ def genericSearch(search_problem, structure):
                 if successor[0] not in visited:
                     
                     # Create a new path with the successor node and push it into the stack
-                    new_path = [path[0] + [successor[0]], path[1] + [successor[1]], successor[2]]
+                    new_path = [path[0] + [successor[0]], path[1] + [successor[1]], path[2] + successor[2]]
                     structure.push(new_path)
 
     return None
