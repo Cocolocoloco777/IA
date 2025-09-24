@@ -176,8 +176,7 @@ def uniformCostSearch(search_problem):
     """Search the node of least total cost first."""
     
     # Lambda function that retrieves the cost of visiting the successor
-    priority_function = lambda path: path[2]
-    return genericSearch(search_problem, util.PriorityQueueWithFunction(priority_function))
+    return genericSearch(search_problem, util.PriorityQueueWithFunction(lambda path: path[2]))
 
 
 def nullHeuristic(state, search_problem=None):
@@ -189,9 +188,9 @@ def nullHeuristic(state, search_problem=None):
 
 
 def aStarSearch(search_problem, heuristic=nullHeuristic):
+    
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return genericSearch(search_problem, util.PriorityQueueWithFunction(lambda path: path[2] + heuristic(path[0][-1], search_problem)))
 
 
 # Abbreviations
