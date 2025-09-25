@@ -116,7 +116,6 @@ def depthFirstSearchExpandVisited(search_problem):
             
             # Create a new path with the successor node and push it into the stack
             new_path = [path[0] + [successor[0]], path[1] + [successor[1]]]
-            print(new_path)
             structure.push(new_path)
 
     return None
