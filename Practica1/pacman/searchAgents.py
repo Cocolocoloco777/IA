@@ -426,7 +426,7 @@ class CornersProblem(search.SearchProblem):
         return len(action_seq)
 
 
-def cornersHeuristic(cur_state, problem):
+def cornersHeuristic(current_state, problem):
     """
     A heuristic for the CornersProblem that you defined.
 
@@ -439,11 +439,31 @@ def cornersHeuristic(cur_state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
-    corners = problem.corners  # These are the corner coordinates
-    walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
+    #corners = problem.corners  # These are the corner coordinates
+    #walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
 
-    "*** YOUR CODE HERE ***"
-    return 0  # Default to trivial solution
+    value = 0
+
+    (x, y), corners = current_state
+    corners = corners.copy()
+
+    if len(corners) == 0:
+        return 0
+    
+    # Get the nearest node
+    old_nearest = min(corners, key = lambda corner: ((x - corner[0]) ** 2 + (y - corner[1]) ** 2) ** 0.5)
+    # Adds the euclidean distance to this node
+    value += ((x - old_nearest[0]) ** 2 + (y - old_nearest[1]) ** 2) ** 0.5
+    
+    corners.remove(old_nearest)
+
+    while len(corners) != 0:
+        new_nearest = min(corners, key = lambda corner: ((old_nearest[0] - corner[0]) ** 2 + (old_nearest[1] - corner[1]) ** 2) ** 0.5)
+        value += ((old_nearest[0] - new_nearest[0]) ** 2 + (old_nearest[1] - new_nearest[1]) ** 2) ** 0.5
+        corners.remove(new_nearest)
+        old_nearest = new_nearest
+    
+    return value
 
 
 class AStarCornersAgent(SearchAgent):
