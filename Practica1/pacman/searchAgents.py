@@ -44,6 +44,7 @@ from game import Agent
 from game import Actions
 import util
 import time
+import itertools
 import search
 
 
@@ -426,6 +427,13 @@ class CornersProblem(search.SearchProblem):
         return len(action_seq)
 
 
+
+def manhattanDistance(state, goal):
+    """
+    Function that implements the manhattan distance between two states
+    """
+    return abs(state[0] - goal[0]) + abs(state[1] - goal[1])
+    
 def cornersHeuristic(current_state, problem):
     """
     A heuristic for the CornersProblem that you defined.
@@ -439,31 +447,24 @@ def cornersHeuristic(current_state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
-    #corners = problem.corners  # These are the corner coordinates
-    #walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
-
-    value = 0
-
-    (x, y), corners = current_state
+    
+    pos, corners = current_state
     corners = corners.copy()
 
+    # If the state has already visited all the corners, return 0
     if len(corners) == 0:
         return 0
     
     # Get the nearest node
-    old_nearest = min(corners, key = lambda corner: ((x - corner[0]) ** 2 + (y - corner[1]) ** 2) ** 0.5)
-    # Adds the euclidean distance to this node
-    value += ((x - old_nearest[0]) ** 2 + (y - old_nearest[1]) ** 2) ** 0.5
-    
-    corners.remove(old_nearest)
-
-    while len(corners) != 0:
-        new_nearest = min(corners, key = lambda corner: ((old_nearest[0] - corner[0]) ** 2 + (old_nearest[1] - corner[1]) ** 2) ** 0.5)
-        value += ((old_nearest[0] - new_nearest[0]) ** 2 + (old_nearest[1] - new_nearest[1]) ** 2) ** 0.5
-        corners.remove(new_nearest)
-        old_nearest = new_nearest
-    
-    return value
+    # For every posible permutation
+    best = float('inf')
+    for perm in itertools.permutations(corners):
+        cost = manhattanDistance(pos, perm[0])
+        for i in range(len(perm) - 1):
+            cost += manhattanDistance(perm[i], perm[i+1])
+        if cost < best:
+            best = cost
+    return best
 
 
 class AStarCornersAgent(SearchAgent):
