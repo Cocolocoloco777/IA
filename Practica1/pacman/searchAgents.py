@@ -355,7 +355,7 @@ class CornersProblem(search.SearchProblem):
 
     You must select a suitable state space and successor function
     """
-
+    
     def __init__(self, startingGameState):
         """
         Stores the walls, pacman's starting position and corners.
@@ -368,6 +368,9 @@ class CornersProblem(search.SearchProblem):
             if not startingGameState.hasFood(*corner):
                 print('Warning: no food in corner ' + str(corner))
         self._expanded = 0  # DO NOT CHANGE; Number of search nodes expanded
+        
+        # For the heuristic, add the dimensions of the maze
+        self.width, self.height = right - 1, top-1
         self.startState = (startingGameState.getPacmanPosition(), list(self.corners))
         
 
@@ -428,11 +431,14 @@ class CornersProblem(search.SearchProblem):
 
 
 
-def manhattanDistance(state, goal):
+def manhattanDistance(node1, node2):
     """
     Function that implements the manhattan distance between two states
+    Args: 
+        node1: first node to calculate the manhattan distance
+        node2: second node to calculate the manhattan distance
     """
-    return abs(state[0] - goal[0]) + abs(state[1] - goal[1])
+    return abs(node1[0] - node2[0]) + abs(node1[1] - node2[1])
     
 def cornersHeuristic(current_state, problem):
     """
@@ -448,24 +454,34 @@ def cornersHeuristic(current_state, problem):
     admissible (as well as consistent).
     """
     
-    pos, corners = current_state
-    corners = corners.copy()
+    
+    pos, corners_not_visited = current_state
+    left_corners = len(corners_not_visited)
 
-    # If the state has already visited all the corners, return 0
-    if len(corners) == 0:
+    if left_corners == 0:
         return 0
     
-    # Get the nearest node
-    # For every posible permutation
-    best = float('inf')
-    for perm in itertools.permutations(corners):
-        cost = manhattanDistance(pos, perm[0])
-        for i in range(len(perm) - 1):
-            cost += manhattanDistance(perm[i], perm[i+1])
-        if cost < best:
-            best = cost
-    return best
+    # Calculate the min distance between the actual position and the nearest corner
+    min_distance = min((manhattanDistance(pos, corner)) for corner in corners_not_visited)
+    # Now, we'll calculate the estimated cost separating each case to make it more efficient
+    match left_corners:
+        case 1:
+            return min_distance
+        case 2:
+            # In this case the best option is to go to the nearest corner and then go directly to the second corner
+            return  min_distance + manhattanDistance(corners_not_visited[0],corners_not_visited[1])
+        case 3:
+            if problem.corners[0] in corners_not_visited and problem.corners[3] in corners_not_visited:
+                min_distance = min(manhattanDistance(pos, problem.corners[0]), manhattanDistance(pos, problem.corners[3]))
+            else:
+                min_distance = min(manhattanDistance(pos, problem.corners[1]), manhattanDistance(pos, problem.corners[2]))
 
+            return min_distance + problem.width + problem.height
+        case 4:
+            return min_distance + 2*min(problem.width, problem.height) + max(problem.width, problem.height)
+        
+    return float('sup')
+        
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
