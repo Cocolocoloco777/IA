@@ -369,8 +369,6 @@ class CornersProblem(search.SearchProblem):
                 print('Warning: no food in corner ' + str(corner))
         self._expanded = 0  # DO NOT CHANGE; Number of search nodes expanded
         
-        # For the heuristic, add the dimensions of the maze
-        self.width, self.height = right - 1, top-1
         self.startState = (startingGameState.getPacmanPosition(), list(self.corners))
         
 
@@ -454,7 +452,7 @@ def cornersHeuristic(current_state, problem):
     admissible (as well as consistent).
     """
     
-    
+    height, width = problem.walls.height-3, problem.walls.width-3
     pos, corners_not_visited = current_state
     left_corners = len(corners_not_visited)
 
@@ -476,9 +474,9 @@ def cornersHeuristic(current_state, problem):
             else:
                 min_distance = min(manhattanDistance(pos, problem.corners[1]), manhattanDistance(pos, problem.corners[2]))
 
-            return min_distance + problem.width + problem.height
+            return min_distance + width + height
         case 4:
-            return min_distance + 2*min(problem.width, problem.height) + max(problem.width, problem.height)
+            return min_distance + 2*min(width, height) + max(width, height)
         
     return float('sup')
         
