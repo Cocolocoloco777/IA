@@ -203,11 +203,11 @@ class MinimaxAlphaBetaStrategy(Strategy):
     """Minimax alpha-beta strategy."""
 
     def __init__(
-        self,
-        heuristic: Heuristic,
-        max_depth_minimax: int,
-        max_sec_per_evaluation: float = 0,
-        verbose: int = 0,
+            self,
+            heuristic: Heuristic,
+            max_depth_minimax: int,
+            max_sec_per_evaluation: float = 0,
+            verbose: int = 0,
     ) -> None:
         super().__init__(verbose)
         self.heuristic = heuristic
@@ -216,14 +216,18 @@ class MinimaxAlphaBetaStrategy(Strategy):
         self.timed_out = False
 
     def next_move(
-        self,
-        state: TwoPlayerGameState,
-        gui: bool = False,
+            self,
+            state: TwoPlayerGameState,
+            gui: bool = False,
     ) -> TwoPlayerGameState:
         """Compute the next state in the game."""
 
-        # NOTE <YOUR CODE HERE>
-        minimax_successor = None
+        minimax_value, minimax_successor = self._max_value(
+            state,
+            -np.inf,
+            np.inf,
+            self.max_depth_minimax,
+        )
 
         """
         # Use this code snippet to trace the execution of the algorithm
@@ -238,3 +242,167 @@ class MinimaxAlphaBetaStrategy(Strategy):
         """
 
         return minimax_successor
+
+    def _min_value(
+            self,
+            state: TwoPlayerGameState,
+            alpha: float,
+            beta: float,
+            depth: int,
+    ) -> float:
+        """Min step of the minimax algorithm."""
+
+        if self.verbose > 1:
+            indent = ' ' * 2 * (self.max_depth_minimax - depth)
+            print(indent + '[#] Alpha-beta interval for node '
+                  + f'{state.board}: [{alpha}, {beta}]')
+
+        if state.end_of_game or depth == 0:
+            if self.verbose > 1:
+                print(indent + '[$] Leaf node found.', end=' ')
+
+            if self.timed_out:
+                minimax_value = 0
+                if self.verbose > 1:
+                    print('Timed out :(')
+            else:
+                time0 = time.time()
+                minimax_value = self.heuristic.evaluate(state)
+                time1 = time.time()
+                timediff = time1 - time0
+                if (self.max_sec_per_evaluation > 0
+                        and timediff > self.max_sec_per_evaluation):
+                    if self.verbose > 1:
+                        print(
+                            "Heuristic timeout: {} > {}".format(
+                                timediff, self.max_sec_per_evaluation))
+                    self.timed_out = True
+            minimax_successor = None
+
+            if not self.timed_out and self.verbose > 1:
+                print(f'Minimax value: {minimax_value}')
+        else:
+            minimax_value = np.inf
+
+            for successor in self.generate_successors(state):
+                if self.verbose > 1:
+                    print(indent + '[#] Minimax value for '
+                          + f'{state.board}: {minimax_value}. '
+                          + f'Analizing successor {successor.board}...')
+
+                successor_minimax_value, _ = self._max_value(
+                    successor,
+                    alpha,
+                    beta,
+                    depth - 1,
+                    )
+
+                if (successor_minimax_value < minimax_value):
+                    if self.verbose > 1:
+                        print(
+                            indent +
+                            f'[#] MIN node {state.board}: ' +
+                            f'successor {successor.board}\'s minimax value ' +
+                            'is smaller. Updating minimax value...')
+                    minimax_value = successor_minimax_value
+                    minimax_successor = successor
+
+                if minimax_value <= alpha:
+                    if self.verbose > 1:
+                        print(indent + f'\033[91m[!] Alpha-beta prune for '
+                              + f'MIN node {state.board}\033[0m')
+                    break
+
+                beta = min(beta, minimax_value)
+                if self.verbose > 1:
+                    print(indent + '[#] Alpha-beta interval for '
+                          + f'node {state.board}: [{alpha}, {beta}]')
+
+        if self.verbose > 1:
+            print(indent + f'[#] Final alpha-beta interval for '
+                  + f'node {state.board}: [{alpha}, {beta}]')
+            print(indent + f'[#] Final minimax value for '
+                  + f'{state.board}: {minimax_value}')
+        return minimax_value, minimax_successor
+
+    def _max_value(
+            self,
+            state: TwoPlayerGameState,
+            alpha: float,
+            beta: float,
+            depth: int,
+    ) -> float:
+        """Max step of the minimax algorithm."""
+
+        if self.verbose > 1:
+            indent = ' ' * 2 * (self.max_depth_minimax - depth)
+            print(indent + '[#] Alpha-beta interval for node '
+                  + f'{state.board}: [{alpha}, {beta}]')
+
+        if state.end_of_game or depth == 0:
+            if self.verbose > 1:
+                print(indent + '[$] Leaf node found.', end=' ')
+
+            if self.timed_out:
+                minimax_value = 0
+                if self.verbose > 1:
+                    print('Timed out :(')
+            else:
+                time0 = time.time()
+                minimax_value = self.heuristic.evaluate(state)
+                time1 = time.time()
+                timediff = time1 - time0
+                if (self.max_sec_per_evaluation > 0
+                        and timediff > self.max_sec_per_evaluation):
+                    if self.verbose > 1:
+                        print(
+                            "Heuristic timeout: {} > {}".format(
+                                timediff, self.max_sec_per_evaluation))
+                    self.timed_out = True
+            minimax_successor = None
+
+            if not self.timed_out and self.verbose > 1:
+                print(f'Minimax value: {minimax_value}')
+        else:
+            minimax_value = -np.inf
+
+            for successor in self.generate_successors(state):
+                if self.verbose > 1:
+                    print(indent + '[#] Minimax value for '
+                          + f'{state.board}: {minimax_value}. '
+                          + f'Analizing successor {successor.board}...')
+
+                successor_minimax_value, _ = self._min_value(
+                    successor,
+                    alpha,
+                    beta,
+                    depth - 1,
+                    )
+
+                if (successor_minimax_value > minimax_value):
+                    if self.verbose > 1:
+                        print(
+                            indent +
+                            f'[#] MAX node {state.board}: ' +
+                            f'successor {successor.board}\'s minimax value ' +
+                            'is greater. Updating minimax value...')
+                    minimax_value = successor_minimax_value
+                    minimax_successor = successor
+
+                if minimax_value >= beta:
+                    if self.verbose > 1:
+                        print(indent + f'\033[91m[!] Alpha-beta prune for '
+                              + f'MAX node {state.board}\033[0m')
+                    break
+
+                alpha = max(alpha, minimax_value)
+                if self.verbose > 1:
+                    print(indent + '[#] Alpha-beta interval for '
+                          + f'node {state.board}: [{alpha}, {beta}]')
+
+        if self.verbose > 1:
+            print(indent + '[#] Final alpha-beta interval for '
+                  + f'node {state.board}: [{alpha}, {beta}]')
+            print(indent + '[#] Final minimax value for '
+                  + f'{state.board}: {minimax_value}')
+        return minimax_value, minimax_successor

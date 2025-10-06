@@ -370,8 +370,8 @@ if __name__ == '__main__':
     ## variables to play with
     iterations_initial_state = 5
     create_small_board = True
-    problem_type = "two_corners"  # "one_corner" "two_corners" "all_corners"
-    do_print_boards_in_path = False
+    problem_type = "all_corners" #"one_corner" "two_corners" "all_corners"
+    do_print_boards_in_path = True
     wait_for_user_input = True
     ##
 
@@ -393,7 +393,7 @@ if __name__ == '__main__':
     print('Problem to be solved: %s' % (problem.__class__))
 
     sols = dict()
-    for method in ['BFS', 'DFS', 'UCS', 'Amin', 'Amax', 'Asum', 'Acomplex']:
+    for method in ['UCS']:
         start = timer()
         if method == 'BFS':
             path = search.breadthFirstSearch(problem)

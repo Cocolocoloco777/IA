@@ -17,7 +17,7 @@ from reversi import (
     from_array_to_dictionary_board,
 )
 from tournament import StudentHeuristic, Tournament
-
+from p1_gggg_mm_apellido1_apellido2 import Solution1
 
 class Heuristic1(StudentHeuristic):
 
@@ -41,30 +41,16 @@ class Heuristic2(StudentHeuristic):
         return float(np.random.rand())
 
 
-class Heuristic3(StudentHeuristic):
-
-    def get_name(self) -> str:
-        return "heuristic"
-
-    def evaluation_function(self, state: TwoPlayerGameState) -> float:
-        return simple_evaluation_function(state)
-
 
 def create_reversi_match(player1: Player, player2: Player) -> TwoPlayerMatch:
 
     initial_board = None
     initial_player = player1
 
-    initial_board = (
-        ['..B.B..',
-         '.WBBW..',
-         'WBWBB..',
-         '.W.WWW.',
-         '.BBWBWB']
-    )
 
     if initial_board is None:
-        height, width = 8, 8
+        height, width = 8,8
+        print("Initial board is None")
     else:
         height = len(initial_board)
         width = len(initial_board[0])
@@ -88,7 +74,7 @@ def create_reversi_match(player1: Player, player2: Player) -> TwoPlayerMatch:
         initial_player=initial_player,
     )
 
-    return TwoPlayerMatch(game_state, max_seconds_per_move=10, gui=False)
+    return TwoPlayerMatch(game_state, max_seconds_per_move=100, gui=False)
 
 
 def create_tictactoe_match(player1: Player, player2: Player) -> TwoPlayerMatch:
@@ -117,15 +103,15 @@ create_match = create_reversi_match
 # since these heuristics do not really assume anything about the Reversi game,
 # they can also be used for TicTacToe, but this will not be true in general
 # create_match = create_tictactoe_match
-tour = Tournament(max_depth=3, init_match=create_match, max_evaluation_time=0.5)
+tour = Tournament(max_depth=4, init_match=create_match, max_evaluation_time=0.5)
 
 # if the strategies are copy-pasted here:
-strats = {'opt1': [Heuristic1], 'opt2': [Heuristic2], 'opt3': [Heuristic3]}
+strats = {'opt2': [Heuristic2], 'opt3': [Solution1]}
 # if the strategies should be loaded from files in a specific folder:
 # folder_name = "folder_strat" # name of the folder where the strategy files are located
 # strats = tour.load_strategies_from_folder(folder=folder_name, max_strat=3)
 
-n = 1
+n = 8
 scores, totals, names = tour.run(
     student_strategies=strats,
     increasing_depth=False,

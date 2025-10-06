@@ -131,7 +131,7 @@ def genericSearch(search_problem, structure):
     
     # The Path is composed of two lists, one of the coordinates of each step and another of the directions taken
     # Insert the initial path with the initial node and no directions
-    structure.push([[search_problem.getStartState()], [], 1]) 
+    structure.push([[search_problem.getStartState()], [], 0])
 
     # List of visited nodes
     visited = []
@@ -140,6 +140,8 @@ def genericSearch(search_problem, structure):
 
         # Get the last path that entered into the stack
         path = structure.pop()
+
+        print(structure.size())
 
         # Get the current state of the path
         current_state = path[0][-1] 
@@ -150,7 +152,6 @@ def genericSearch(search_problem, structure):
 
         # Visit the current state
         if current_state not in visited:
-            visited.append(current_state)
 
             # Loop through the not visited successors of the current state
             for successor in search_problem.getSuccessors(current_state):
