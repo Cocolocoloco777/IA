@@ -65,7 +65,7 @@ def func_glob(n: int, state: TwoPlayerGameState) -> float:
 class Solution1(StudentHeuristic):
     POS_WEIGHT = None
     def get_name(self) -> str:
-        return "weighted_heuristic"
+        return "Rochofington"
     
     
     def evaluation_function(self, state: TwoPlayerGameState) -> float:
@@ -104,16 +104,58 @@ class Solution1(StudentHeuristic):
             opp_moves = len(legal_moves(state.board, opp_type))
             
         mobility_score = my_moves - opp_moves
+
         
-        return 3 * (my_score - opp_score) +  positional_score + mobility_score*2
+        return  3 * (my_score - opp_score) + positional_score + mobility_score*2
 
 
 
 class Solution2(StudentHeuristic):
+    POS_WEIGHT = None
+
     def get_name(self) -> str:
-        return "solution2"
+        return "Rochiringuito chanchullero"
     
     def evaluation_function(self, state: TwoPlayerGameState) -> float:
-        return func_glob(2, state)
+        
+        # Se queda pendiente modificar los pesos en funcion del momento de la partida   
+        if self.POS_WEIGHT is None:
+            self.POS_WEIGHT = generate_weight_matrix(state.game.width, state.game.height)
+            
+        #First of all, we will establish the utility of each point in the board given a certain width and height
+        if state.is_player_max(state.player1):
+            playerType = state.player1.label
+            opp_type = state.player2.label
+            my_score = state.scores[0]
+            opp_score = state.scores[1]
+        else:
+            playerType = state.player2.label
+            opp_type = state.player1.label
+            my_score = state.scores[1]
+            opp_score = state.scores[0]
+
+        # Obtener el valor posicional del tablero
+        my_positional_score, opp_positional_score = 0,0
+        for position in state.board.keys():
+            if state.board[position] == playerType:
+                my_positional_score += self.POS_WEIGHT[position[0] - 1, position[1]-1]
+            else:
+                opp_positional_score += self.POS_WEIGHT[position[0]-1, position[1]-1]
+        
+        positional_score = my_positional_score - opp_positional_score
+
+        if isinstance(state.game, Reversi):
+            legal_moves = getattr(state.game, "_get_valid_moves", None)
+        
+        if callable(legal_moves):
+            my_moves = len(legal_moves(state.board, playerType))
+            opp_moves = len(legal_moves(state.board, opp_type))
+            
+        mobility_score = my_moves - opp_moves
+
+        free_positions_norm = (state.game.width * state.game.height - my_score - opp_score) / (state.game.width * state.game.height)
+        
+        return  (1 - free_positions_norm) * 3 * (my_score - opp_score) + free_positions_norm * positional_score + mobility_score*2
+    
 
 

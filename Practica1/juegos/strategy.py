@@ -42,8 +42,7 @@ class Strategy(ABC):
         successors = state.game.generate_successors(state)
         assert successors  # Error if list is empty
         return successors
-
-
+    
 class RandomStrategy(Strategy):
     """Strategy in which moves are selected uniformly at random."""
 
