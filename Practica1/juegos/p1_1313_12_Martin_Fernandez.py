@@ -158,4 +158,159 @@ class Solution2(StudentHeuristic):
         return  (1 - free_positions_norm) * 3 * (my_score - opp_score) + free_positions_norm * positional_score + mobility_score*2
     
 
+class WeighedMatrixSolution(StudentHeuristic):
 
+    POS_WEIGHT = None
+    DIFFERENCE_WEIGHT = 0
+    MOBILITY_WEIGHT = 0
+    UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.zeros((1, 1))
+    INSIDE_MATRIX_WEIGHTS = 0
+
+    def get_name(self) -> str:
+        raise RuntimeError("Abstract class")
+
+    def generate_weight_matrix(width, height, upper_left_corner_matrix, inside_number):
+
+        # Truncate the corners if the size is too small
+        if (width//2 < upper_left_corner_matrix.shape[0]):
+            upper_left_corner_matrix = upper_left_corner_matrix[:, 0:width//2]
+
+        if (height//2 < upper_left_corner_matrix.shape[0]):
+            upper_left_corner_matrix = upper_left_corner_matrix[0:height//2, :]
+
+        # Get walls
+        left_wall = upper_left_corner_matrix[-1, :][None, :]
+        right_wall = np.fliplr(left_wall)
+        upper_wall = upper_left_corner_matrix[:, -1][:, None]
+        lower_wall = np.flipud(upper_wall)
+
+        upper_side = np.hstack((upper_left_corner_matrix, np.tile(upper_wall, max(width - 2 * upper_left_corner_matrix.shape[0], 0)), np.fliplr(upper_left_corner_matrix)))
+        middle_part = np.hstack((np.tile(left_wall, (max(height - 2 * upper_left_corner_matrix.shape[1], 0), 1)), np.full((max(height - 2 * upper_left_corner_matrix.shape[1], 0), max(width - 2 * upper_left_corner_matrix.shape[0], 0)), inside_number), np.tile(right_wall, (max(height - 2 * upper_left_corner_matrix.shape[1], 0), 1))))
+        lower_side = np.hstack((np.flipud(upper_left_corner_matrix), np.tile(lower_wall, max(width - 2 * upper_left_corner_matrix.shape[0], 0)), np.fliplr(np.flipud(upper_left_corner_matrix))))
+        
+        return np.vstack((upper_side, middle_part, lower_side))
+
+    def get_stability(self, state: TwoPlayerGameState):
+        corners = [(1,state.game.heigth), (1,1), (state.game.width), ]
+        pass
+            
+    def get_players_label_and_score(self, state: TwoPlayerGameState):
+
+        # Get the player labels and score
+        if state.is_player_max(state.player1):
+            player_label = state.player1.label
+            opp_label = state.player2.label
+            player_score = state.scores[0]
+            opp_score = state.scores[1]
+        else:
+            player_label = state.player2.label
+            opp_type = state.player1.label
+            player_score = state.scores[1]
+            opp_score = state.scores[0]
+
+        return player_label, opp_label, player_score, opp_score
+
+    def get_positional_score(self, state: TwoPlayerGameState, player_label):
+
+        # Init the matrix if it is the first time
+        if self.POS_WEIGHT is None:
+            self.POS_WEIGHT = generate_weight_matrix(state.game.width, state.game.height, self.UPPER_LEFT_CORNER_MATRIX_WEIGHTS, self.INSIDE_MATRIX_WEIGHTS)
+
+        # Obtain the positional value of each position and compute the scores
+        player_positional_score, opp_positional_score = 0,0
+        for position in state.board.keys():
+
+            # Add the positional value to the player score if it is the player's chip 
+            if state.board[position] == player_label:
+                player_positional_score += self.POS_WEIGHT[position[0] - 1, position[1]-1]
+            else:
+                # Add the positional value to the opponent score if it is the opponent's chip
+                opp_positional_score += self.POS_WEIGHT[position[0]-1, position[1]-1]
+        
+        return player_positional_score, opp_positional_score
+
+    def get_mobility_score(self, state: TwoPlayerGameState, player_label, opp_label):
+
+        # Get the private function from the game that return the possible valid moves of a board
+        if isinstance(state.game, Reversi):
+            legal_moves = getattr(state.game, "_get_valid_moves", None)
+        
+        # Get the number of legal moves from each player
+        if callable(legal_moves):
+            player_moves = len(legal_moves(state.board, player_label))
+            opp_moves = len(legal_moves(state.board, opp_label))
+
+        return player_moves, opp_moves
+    
+    def get_relative_available_positions(self, state: TwoPlayerGameState, player_score, opp_score):
+
+        # Compute the number of positions in the game
+        all_positions = state.game.width * state.game.height
+
+        # Compute the number of available positions
+        available_positions = all_positions - player_score - opp_score
+        
+        return available_positions / all_positions
+    
+    def evaluation_function(self, state: TwoPlayerGameState) -> float:
+
+        # Get the players labels and scores
+        player_label, opp_label, player_score, opp_score = self.get_players_label_and_score(state)
+
+        # Calculate the difference score
+        difference_score = player_score - opp_score
+
+        # Calculate the positional score
+        player_positional_score, opp_positional_score = self.get_positional_score(state, player_label)
+        positional_score = player_positional_score - opp_positional_score
+
+        # Calculate the mobility score
+        player_moves, opp_moves = self.get_mobility_score(state, player_label, opp_label)
+        mobility_score = player_moves - opp_moves
+
+        # Get the relative available positions
+        available_positions = self.get_relative_available_positions(state, player_score, opp_score)
+
+        # Compute the score
+        score = (1 - available_positions) * self.DIFFERENCE_WEIGHT * difference_score
+        score += available_positions * positional_score
+        score += available_positions * self.MOBILITY_WEIGHT * mobility_score
+
+        return score
+        
+
+def generate_weight_matrix(width, height, upper_left_corner_matrix, inside_number):
+
+    # Truncate the corners if the size is too small
+    if (width//2 < upper_left_corner_matrix.shape[0]):
+        upper_left_corner_matrix = upper_left_corner_matrix[:, 0:width//2]
+
+    if (height//2 < upper_left_corner_matrix.shape[0]):
+        upper_left_corner_matrix = upper_left_corner_matrix[0:height//2, :]
+
+    # Get walls
+    left_wall = upper_left_corner_matrix[-1, :][None, :]
+    right_wall = np.fliplr(left_wall)
+    upper_wall = upper_left_corner_matrix[:, -1][:, None]
+    lower_wall = np.flipud(upper_wall)
+
+    upper_side = np.hstack((upper_left_corner_matrix, np.tile(upper_wall, max(width - 2 * upper_left_corner_matrix.shape[0], 0)), np.fliplr(upper_left_corner_matrix)))
+    middle_part = np.hstack((np.tile(left_wall, (max(height - 2 * upper_left_corner_matrix.shape[1], 0), 1)), np.full((max(height - 2 * upper_left_corner_matrix.shape[1], 0), max(width - 2 * upper_left_corner_matrix.shape[0], 0)), inside_number), np.tile(right_wall, (max(height - 2 * upper_left_corner_matrix.shape[1], 0), 1))))
+    lower_side = np.hstack((np.flipud(upper_left_corner_matrix), np.tile(lower_wall, max(width - 2 * upper_left_corner_matrix.shape[0], 0)), np.fliplr(np.flipud(upper_left_corner_matrix))))
+    
+    return np.vstack((upper_side, middle_part, lower_side))
+
+
+
+print(generate_weight_matrix(5, 5, np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 1]]), 0))
+
+class Solution1(WeighedMatrixSolution):
+
+    DIFFERENCE_WEIGHT = 0
+    MOBILITY_WEIGHT = 0
+    UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.array((1, 1))
+    INSIDE_MATRIX_WEIGHTS = 0
+
+    def get_name(self) -> str:
+        raise "Rochirimoyo"
+    
