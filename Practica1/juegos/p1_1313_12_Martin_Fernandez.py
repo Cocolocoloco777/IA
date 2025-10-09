@@ -62,7 +62,7 @@ def func_glob(n: int, state: TwoPlayerGameState) -> float:
     return n + simple_evaluation_function(state)
 
 
-class Solution1(StudentHeuristic):
+class Solution4(StudentHeuristic):
     POS_WEIGHT = None
     def get_name(self) -> str:
         return "Rochofington"
@@ -73,6 +73,7 @@ class Solution1(StudentHeuristic):
         # Se queda pendiente modificar los pesos en funcion del momento de la partida   
         if self.POS_WEIGHT is None:
             self.POS_WEIGHT = generate_weight_matrix(state.game.width, state.game.height)
+            print(self.POS_WEIGHT)
             
         #First of all, we will establish the utility of each point in the board given a certain width and height
         if state.is_player_max(state.player1):
@@ -104,9 +105,8 @@ class Solution1(StudentHeuristic):
             opp_moves = len(legal_moves(state.board, opp_type))
             
         mobility_score = my_moves - opp_moves
-
         
-        return  3 * (my_score - opp_score) + positional_score + mobility_score*2
+        return  3 * (my_score - opp_score) + positional_score + mobility_score*2 + WeighedMatrixSolution.get_stability(state, playerType)
 
 
 
@@ -165,6 +165,7 @@ class WeighedMatrixSolution(StudentHeuristic):
     MOBILITY_WEIGHT = 0
     UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.zeros((1, 1))
     INSIDE_MATRIX_WEIGHTS = 0
+    CORNERS = []
 
     def get_name(self) -> str:
         raise RuntimeError("Abstract class")
@@ -190,10 +191,103 @@ class WeighedMatrixSolution(StudentHeuristic):
         
         return np.vstack((upper_side, middle_part, lower_side))
 
-    def get_stability(self, state: TwoPlayerGameState):
-        corners = [(1,state.game.heigth), (1,1), (state.game.width), ]
-        pass
+    def get_stability(self, state: TwoPlayerGameState, playerLabel, opp_label):
+        height, width = state.game.height, state.game.width
+        
+        stable_states = []
+        already_checked_states = []
+        possible_stable_states = []
+        if self.CORNERS == None:
+           self.CORNERS = [(1,height), (1,1), (width, height), (1)]
+        
+        total_score = 0
+        
+        
+        # For each corner, expand the stability of the states, independently of the player
+        for corner in self.CORNERS:
             
+            expanding_label = None
+            expanding_label = state.board.get(corner, None)
+            
+            # If the corner is of a player, set the corner to be expanded
+            if expanding_label != None:
+                possible_stable_states.append(corner)
+                
+            # For every possible stable state
+            num_stable_states = 0
+            while len(possible_stable_states) > 0:
+                print(len(possible_stable_states))
+                # Obtain the first state
+                checking_state = possible_stable_states.pop()
+                already_checked_states.append(checking_state)
+                
+                # If the state if stable, add 1 to the number of stable states for that corner
+                if self.is_stable(state, expanding_label, checking_state, stable_states):
+                    num_stable_states += 1
+                    stable_states.append(checking_state)
+                    x, y = checking_state[0], checking_state[1]
+                    
+                    # Calculate the posible adjacent states 
+                    adjacent_states = [(x+1, y),(x-1, y),(x, y+1), (x, y-1), (x+1,y+1), (x+1,y-1), (x-1,y-1), (x-1, y+1)]
+                    for adjacent in adjacent_states:
+                        
+                        # If the adjacent state is in the table and the place is occupied by a piece of the expanding player, add it to be analized
+                        if self.is_in_table(width, height, adjacent) and adjacent not in possible_stable_states and adjacent not in already_checked_states and state.board.get(state, None) == expanding_label:
+                            possible_stable_states.append(adjacent)
+            
+            if expanding_label == playerLabel:
+                total_score += num_stable_states
+            else:
+                total_score -= num_stable_states
+        
+        if len(stable_states) != 0:
+            return total_score/len(stable_states)
+        
+        return total_score
+       
+    def is_in_table(self, width, height, position):
+        """
+        Function that returns whether a certain position is in the Reversi table
+        """
+        if position[0] <= width and position[0] > 1 and position[1] > 0 and position[1] <= height:
+            return True
+        else:
+            return False
+    
+    
+    def state_is_border(self, state, height, width):
+        """
+        Function that returns whether the given state is a border or not 
+        """
+        
+        # If the x coordinate is 1 or the width or the y coordinate is the height or one, the state is a border
+        if state[0] == width or state[0] == 1 or state[1] == height or state[1] == 1:
+            return True
+
+        return False
+         
+        
+    
+    def is_stable(self, expanding_label, possible_stable, stable_states, height, width):
+        
+        # To see if a piece if stable we need to look into the 4 diferent directions NORTH-SOUTH, NORTHWEST-SOUTHEAST, SOUTHWEST-NOTHEAST, EAST-WEST 
+        # We need to have at least one stable piece or a border piece for each 2 directions (x-y) for the central piece to be considered stable
+        
+        NORTH_SOUTH = [(possible_stable[0], possible_stable [1]+1), (possible_stable[0], possible_stable[1]-1)]
+        EAST_WEST = [(possible_stable[0]-1, possible_stable[1]), (possible_stable[0]+1, possible_stable[1])]
+        NORTHEAST_SOUTHWEST = [(possible_stable[0]-1, possible_stable[1] + 1), (possible_stable[0] + 1, possible_stable[1] - 1)]
+        SOUTHEAST_NOTHWEST = [(possible_stable[0] + 1, possible_stable[1] + 1),(possible_stable[0] - 1, possible_stable[1] - 1)]
+        
+        DIRECTIONS = [NORTH_SOUTH, EAST_WEST, NORTHEAST_SOUTHWEST, SOUTHEAST_NOTHWEST]
+        for direction in DIRECTIONS:
+            if direction[0] not in stable_states and not self.state_is_border(direction[0], height, width) and direction[1] not in stable_states and self.state_is_border(direction[1], height, width):
+                return False
+        
+        return True
+        
+        
+        
+    
     def get_players_label_and_score(self, state: TwoPlayerGameState):
 
         # Get the player labels and score
@@ -204,7 +298,7 @@ class WeighedMatrixSolution(StudentHeuristic):
             opp_score = state.scores[1]
         else:
             player_label = state.player2.label
-            opp_type = state.player1.label
+            opp_label = state.player1.label
             player_score = state.scores[1]
             opp_score = state.scores[0]
 
@@ -215,9 +309,9 @@ class WeighedMatrixSolution(StudentHeuristic):
         # Init the matrix if it is the first time
         if self.POS_WEIGHT is None:
             self.POS_WEIGHT = generate_weight_matrix(state.game.width, state.game.height, self.UPPER_LEFT_CORNER_MATRIX_WEIGHTS, self.INSIDE_MATRIX_WEIGHTS)
-
+        
         # Obtain the positional value of each position and compute the scores
-        player_positional_score, opp_positional_score = 0,0
+        player_positional_score, opp_positional_score = 0, 0
         for position in state.board.keys():
 
             # Add the positional value to the player score if it is the player's chip 
@@ -275,7 +369,9 @@ class WeighedMatrixSolution(StudentHeuristic):
         score = (1 - available_positions) * self.DIFFERENCE_WEIGHT * difference_score
         score += available_positions * positional_score
         score += available_positions * self.MOBILITY_WEIGHT * mobility_score
-
+        
+        score += self.get_stability(state, player_label, opp_label)
+        
         return score
         
 
@@ -301,16 +397,13 @@ def generate_weight_matrix(width, height, upper_left_corner_matrix, inside_numbe
     return np.vstack((upper_side, middle_part, lower_side))
 
 
-
-print(generate_weight_matrix(5, 5, np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 1]]), 0))
-
 class Solution1(WeighedMatrixSolution):
 
     DIFFERENCE_WEIGHT = 0
-    MOBILITY_WEIGHT = 0
-    UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.array((1, 1))
+    MOBILITY_WEIGHT = 7
+    UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 0]])
     INSIDE_MATRIX_WEIGHTS = 0
 
     def get_name(self) -> str:
-        raise "Rochirimoyo"
+        return "Rochirimoyo"
     
