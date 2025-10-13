@@ -80,7 +80,7 @@ from p1_1313_12_Martin_Fernandez import Solution1  # import your StudentHeuristi
 my_heuristic = Solution1() # instantiate your heuristic here
 my_player = Player(
     name=my_heuristic.get_name(),
-    strategy=MinimaxStrategy(  # MinimaxAlphaBetaStrategy(
+    strategy=MinimaxAlphaBetaStrategy(  # MinimaxAlphaBetaStrategy(
         heuristic=Heuristic(name=my_heuristic.get_name(), 
                             evaluation_function=my_heuristic.evaluation_function),
         max_depth_minimax=3,
@@ -94,7 +94,7 @@ my_player = Player(
 #player_a, player_b = player_manual, player_manual2
 
 # Manual vs minimax player
-player_a, player_b = my_player, player_random2
+player_a, player_b = my_player, player_manual
 
 # minimax alpha-beta vs minimax alpha-beta player
 #player_a, player_b = player_minimax4, player_minimax3
@@ -111,15 +111,6 @@ initial_player = player_a  # Player who moves first.
 
 # Board at an intermediate state of the game.
 initial_board = None
-"""
-initial_board = (
-    ['..B.B..',
-     '.WBBW..',
-     'WBWBB..',
-     '.W.WWW.',
-     '.BBWBWB']
-) 
-"""
 
 
 # NOTE Uncoment to use standard initial board.

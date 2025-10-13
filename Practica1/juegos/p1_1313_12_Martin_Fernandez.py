@@ -10,7 +10,7 @@ from tournament import (
     StudentHeuristic,
 )
     
-from reversi import Reversi
+from reversi import Reversi, from_dictionary_to_array_board, from_array_to_dictionary_board
 
 TEMPLATE_8x8 = np.array([
     [50, -20,  10,   5,   5,  10, -20, 50],
@@ -62,7 +62,7 @@ def func_glob(n: int, state: TwoPlayerGameState) -> float:
     return n + simple_evaluation_function(state)
 
 
-class Solution4(StudentHeuristic):
+class Solution2(StudentHeuristic):
     POS_WEIGHT = None
     def get_name(self) -> str:
         return "Rochofington"
@@ -72,8 +72,7 @@ class Solution4(StudentHeuristic):
         
         # Se queda pendiente modificar los pesos en funcion del momento de la partida   
         if self.POS_WEIGHT is None:
-            self.POS_WEIGHT = generate_weight_matrix(state.game.width, state.game.height)
-            print(self.POS_WEIGHT)
+            self.POS_WEIGHT = generate_weight_matrix(state.game.width, state.game.height, np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 0]]), 0)
             
         #First of all, we will establish the utility of each point in the board given a certain width and height
         if state.is_player_max(state.player1):
@@ -106,11 +105,11 @@ class Solution4(StudentHeuristic):
             
         mobility_score = my_moves - opp_moves
         
-        return  3 * (my_score - opp_score) + positional_score + mobility_score*2 + WeighedMatrixSolution.get_stability(state, playerType)
+        return  3 * (my_score - opp_score) + positional_score + mobility_score*2
 
 
 
-class Solution2(StudentHeuristic):
+class Solution3(StudentHeuristic):
     POS_WEIGHT = None
 
     def get_name(self) -> str:
@@ -120,7 +119,7 @@ class Solution2(StudentHeuristic):
         
         # Se queda pendiente modificar los pesos en funcion del momento de la partida   
         if self.POS_WEIGHT is None:
-            self.POS_WEIGHT = generate_weight_matrix(state.game.width, state.game.height)
+            self.POS_WEIGHT = generate_weight_matrix(state.game.width, state.game.height, np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 0]]), 0)
             
         #First of all, we will establish the utility of each point in the board given a certain width and height
         if state.is_player_max(state.player1):
@@ -165,7 +164,7 @@ class WeighedMatrixSolution(StudentHeuristic):
     MOBILITY_WEIGHT = 0
     UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.zeros((1, 1))
     INSIDE_MATRIX_WEIGHTS = 0
-    CORNERS = []
+    CORNERS = None
 
     def get_name(self) -> str:
         raise RuntimeError("Abstract class")
@@ -193,15 +192,11 @@ class WeighedMatrixSolution(StudentHeuristic):
 
     def get_stability(self, state: TwoPlayerGameState, playerLabel, opp_label):
         height, width = state.game.height, state.game.width
-        
         stable_states = []
-        already_checked_states = []
         possible_stable_states = []
         if self.CORNERS == None:
            self.CORNERS = [(1,height), (1,1), (width, height), (1)]
-        
         total_score = 0
-        
         
         # For each corner, expand the stability of the states, independently of the player
         for corner in self.CORNERS:
@@ -212,17 +207,16 @@ class WeighedMatrixSolution(StudentHeuristic):
             # If the corner is of a player, set the corner to be expanded
             if expanding_label != None:
                 possible_stable_states.append(corner)
+            
                 
             # For every possible stable state
             num_stable_states = 0
             while len(possible_stable_states) > 0:
-                print(len(possible_stable_states))
                 # Obtain the first state
                 checking_state = possible_stable_states.pop()
-                already_checked_states.append(checking_state)
-                
+                # Get the label of the piece in that state                
                 # If the state if stable, add 1 to the number of stable states for that corner
-                if self.is_stable(state, expanding_label, checking_state, stable_states):
+                if checking_state not in stable_states and self.is_stable(expanding_label, checking_state, stable_states, height, width):
                     num_stable_states += 1
                     stable_states.append(checking_state)
                     x, y = checking_state[0], checking_state[1]
@@ -230,18 +224,14 @@ class WeighedMatrixSolution(StudentHeuristic):
                     # Calculate the posible adjacent states 
                     adjacent_states = [(x+1, y),(x-1, y),(x, y+1), (x, y-1), (x+1,y+1), (x+1,y-1), (x-1,y-1), (x-1, y+1)]
                     for adjacent in adjacent_states:
-                        
                         # If the adjacent state is in the table and the place is occupied by a piece of the expanding player, add it to be analized
-                        if self.is_in_table(width, height, adjacent) and adjacent not in possible_stable_states and adjacent not in already_checked_states and state.board.get(state, None) == expanding_label:
+                        if self.is_in_table(width, height, adjacent) and adjacent not in possible_stable_states and state.board.get(adjacent, None) == expanding_label:
                             possible_stable_states.append(adjacent)
             
             if expanding_label == playerLabel:
                 total_score += num_stable_states
             else:
                 total_score -= num_stable_states
-        
-        if len(stable_states) != 0:
-            return total_score/len(stable_states)
         
         return total_score
        
@@ -261,7 +251,7 @@ class WeighedMatrixSolution(StudentHeuristic):
         """
         
         # If the x coordinate is 1 or the width or the y coordinate is the height or one, the state is a border
-        if state[0] == width or state[0] == 1 or state[1] == height or state[1] == 1:
+        if state[0] == (width+1) or state[0] == 0 or state[1] == (height+1) or state[1] == 0:
             return True
 
         return False
@@ -279,8 +269,12 @@ class WeighedMatrixSolution(StudentHeuristic):
         SOUTHEAST_NOTHWEST = [(possible_stable[0] + 1, possible_stable[1] + 1),(possible_stable[0] - 1, possible_stable[1] - 1)]
         
         DIRECTIONS = [NORTH_SOUTH, EAST_WEST, NORTHEAST_SOUTHWEST, SOUTHEAST_NOTHWEST]
+        
+        if possible_stable in self.CORNERS:
+            return True
+        
         for direction in DIRECTIONS:
-            if direction[0] not in stable_states and not self.state_is_border(direction[0], height, width) and direction[1] not in stable_states and self.state_is_border(direction[1], height, width):
+            if direction[0] not in stable_states and not self.state_is_border(direction[0], height, width) and direction[1] not in stable_states and not self.state_is_border(direction[1], height, width):
                 return False
         
         return True
@@ -365,14 +359,28 @@ class WeighedMatrixSolution(StudentHeuristic):
         # Get the relative available positions
         available_positions = self.get_relative_available_positions(state, player_score, opp_score)
 
-        # Compute the score
-        score = (1 - available_positions) * self.DIFFERENCE_WEIGHT * difference_score
-        score += available_positions * positional_score
-        score += available_positions * self.MOBILITY_WEIGHT * mobility_score
+        # Get the stability score
+        stability_score = self.get_stability(state, player_label, opp_label)
         
-        score += self.get_stability(state, player_label, opp_label)
+        # Compute the score
+        score =  self.get_difference_weight(available_positions) * difference_score
+        score +=  self.get_positional_weight(available_positions) * positional_score
+        score +=  self.get_mobility_weight(available_positions) * mobility_score
+        score += self.get_stability_weight(available_positions) * stability_score
         
         return score
+    
+    def get_positional_weight(self, available_positions):
+        return available_positions
+    
+    def get_difference_weight(self, available_positions):
+        return self.DIFFERENCE_WEIGHT * (1 - available_positions)
+    
+    def get_mobility_weight(self, available_positions):
+        return self.MOBILITY_WEIGHT
+    
+    def get_stability_weight(self, available_positions):
+        return self.STABILITY_WEIGHT
         
 
 def generate_weight_matrix(width, height, upper_left_corner_matrix, inside_number):
@@ -399,11 +407,67 @@ def generate_weight_matrix(width, height, upper_left_corner_matrix, inside_numbe
 
 class Solution1(WeighedMatrixSolution):
 
-    DIFFERENCE_WEIGHT = 0
-    MOBILITY_WEIGHT = 7
+    DIFFERENCE_WEIGHT = 3
+    MOBILITY_WEIGHT = 2
+    STABILITY_WEIGHT = 5
     UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 0]])
     INSIDE_MATRIX_WEIGHTS = 0
 
     def get_name(self) -> str:
         return "Rochirimoyo"
+    
+    
+class Solution4(WeighedMatrixSolution):
+
+    DIFFERENCE_WEIGHT = 3
+    MOBILITY_WEIGHT = 2
+    STABILITY_WEIGHT = 5
+    UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.array([[100, -20, 10], [-20, -30, 5], [10, 5, 0]])
+    INSIDE_MATRIX_WEIGHTS = 0
+
+    def get_name(self) -> str:
+        return "Rochirimoyo"
+    
+    def get_positional_weight(self, available_positions):
+        return available_positions
+    
+    def get_difference_weight(self, available_positions):
+        return self.DIFFERENCE_WEIGHT * (1 - available_positions)
+    
+    def get_mobility_weight(self, available_positions):
+        return self.MOBILITY_WEIGHT
+    
+    def get_stability_weight(self, available_positions):
+        return self.STABILITY_WEIGHT
+    
+    
+class Solution5(WeighedMatrixSolution):
+
+    DIFFERENCE_WEIGHT_INITIAL = 3
+    DIFFERENCE_WEIGHT_FINAL = 3
+
+    MOBILITY_WEIGHT_INITIAL = 2
+    MOBILITY_WEIGHT_FINAL = 1
+    
+    STABILITY_WEIGHT_INITIAL = 5
+    STABILITY_WEIGHT_FINAL = 5
+
+    UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 0]])
+    INSIDE_MATRIX_WEIGHTS = 0
+
+    def get_name(self) -> str:
+        return "Rochirimoyo"
+    
+    def get_positional_weight(self, available_positions):
+        return available_positions
+    
+    def get_difference_weight(self, available_positions):
+        return self.DIFFERENCE_WEIGHT * (1 - available_positions)
+    
+    def get_mobility_weight(self, available_positions):
+        t = (available_positions - 15)/(41-15)
+        return self.MOBILITY_WEIGHT_FINAL * t*(self.MOBILITY_WEIGHT_INITIAL - self.MOBILITY_WEIGHT_FINAL)
+    
+    def get_stability_weight(self, available_positions):
+        return self.STABILITY_WEIGHT_INITIAL
     
