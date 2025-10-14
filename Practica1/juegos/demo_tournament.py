@@ -17,7 +17,7 @@ from reversi import (
     from_array_to_dictionary_board,
 )
 from tournament import StudentHeuristic, Tournament
-from p1_1313_12_Martin_Fernandez import Solution1, Solution2,Solution3, Solution4,Solution5
+from p1_1313_12_Martin_Fernandez import RobocadilloRochorizo, RochocolateCaliente ,Rochirimoyo
 from heuristic import (
     simple_evaluation_function,
 )
@@ -114,7 +114,7 @@ create_match = create_reversi_match
 tour = Tournament(max_depth=4, init_match=create_match, max_evaluation_time=0.5)
 
 # if the strategies are copy-pasted here:
-strats = {'opt2': [Solution5], 'opt3': [Solution1]}
+strats = {'opt1': [Rochirimoyo],'opt2': [RobocadilloRochorizo], 'opt3': [RochocolateCaliente]}
 # if the strategies should be loaded from files in a specific folder:
 # folder_name = "folder_strat" # name of the folder where the strategy files are located
 # strats = tour.load_strategies_from_folder(folder=folder_name, max_strat=3)

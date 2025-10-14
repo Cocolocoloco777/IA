@@ -200,7 +200,7 @@ class PositionSearchProblem(search.SearchProblem):
         Returns successor states, the actions they require, and a cost of 1.
 
          As noted in search.py:
-             For a given state, this should return a list of triples,
+        For a given state, this should return a list of triples,
          (successor, action, stepCost), where 'successor' is a
          successor to the current state, 'action' is the action
          required to get there, and 'stepCost' is the incremental
