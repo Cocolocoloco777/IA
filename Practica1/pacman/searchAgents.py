@@ -463,6 +463,8 @@ def cornersHeuristic(current_state, problem):
     min_distance = min((manhattanDistance(pos, corner)) for corner in corners_not_visited)
     # Now, we'll calculate the estimated cost separating each case to make it more efficient
     match left_corners:
+        case 0:
+            return 0
         case 1:
             return min_distance
         case 2:
