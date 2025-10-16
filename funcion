@@ -1,1 +1,0 @@
-f = lambda t, inicial, medio, final: inicial + (medio - inicial)*(t/0.4) if t <= 0.4 else medio + (final - medio)*((t-0.4)/(0.75-0.4)) if t <= 0.75 else final

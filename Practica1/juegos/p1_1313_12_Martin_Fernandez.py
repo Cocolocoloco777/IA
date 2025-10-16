@@ -45,55 +45,7 @@ def generate_weight_matrix(width, height, corner_weight = 50, wall_weight = 5, w
         matrix = np.array([top_bottom_row for _ in range(height)])
         
     return matrix
-    
-
-class RobocadilloRochorizo(StudentHeuristic):
-    POS_WEIGHT = None
-
-    def get_name(self) -> str:
-        return "Robocadillo de rochorizo"
-    
-    def evaluation_function(self, state: TwoPlayerGameState) -> float:
-        
-        # Se queda pendiente modificar los pesos en funcion del momento de la partida   
-        if self.POS_WEIGHT is None:
-            self.POS_WEIGHT = generate_weight_matrix(state.game.width, state.game.height, np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 0]]), 0)
-            
-        #First of all, we will establish the utility of each point in the board given a certain width and height
-        if state.is_player_max(state.player1):
-            playerType = state.player1.label
-            opp_type = state.player2.label
-            my_score = state.scores[0]
-            opp_score = state.scores[1]
-        else:
-            playerType = state.player2.label
-            opp_type = state.player1.label
-            my_score = state.scores[1]
-            opp_score = state.scores[0]
-
-        # Obtener el valor posicional del tablero
-        my_positional_score, opp_positional_score = 0,0
-        for position in state.board.keys():
-            if state.board[position] == playerType:
-                my_positional_score += self.POS_WEIGHT[position[0] - 1, position[1]-1]
-            else:
-                opp_positional_score += self.POS_WEIGHT[position[0]-1, position[1]-1]
-        
-        positional_score = my_positional_score - opp_positional_score
-
-        if isinstance(state.game, Reversi):
-            legal_moves = getattr(state.game, "_get_valid_moves", None)
-        
-        if callable(legal_moves):
-            my_moves = len(legal_moves(state.board, playerType))
-            opp_moves = len(legal_moves(state.board, opp_type))
-            
-        mobility_score = my_moves - opp_moves
-
-        free_positions_norm = (state.game.width * state.game.height - my_score - opp_score) / (state.game.width * state.game.height)
-        
-        return  (1 - free_positions_norm) * 3 * (my_score - opp_score) + free_positions_norm * positional_score + mobility_score*2
-    
+   
 
 class WeighedMatrixSolution():
 
@@ -341,59 +293,47 @@ def generate_weight_matrix(width, height, upper_left_corner_matrix, inside_numbe
     return np.vstack((upper_side, middle_part, lower_side))
     
 
-class Rochirimoyo(WeighedMatrixSolution, StudentHeuristic):
+class Rochinpon(WeighedMatrixSolution, StudentHeuristic):
 
-    DIFFERENCE_WEIGHT = 3
-    MOBILITY_WEIGHT = 2
-    STABILITY_WEIGHT = 5
-    UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 0]])
-    INSIDE_MATRIX_WEIGHTS = 0
+    DIFFERENCE_WEIGHT_INITIAL = 3
+    DIFFERENCE_WEIGHT_MIDDLE = 5
+    DIFFERENCE_WEIGHT_FINAL = 15
 
-    def get_name(self) -> str:
-        return "Rochirimoyo"
+    MOBILITY_WEIGHT_INITIAL = 14
+    MOBILITY_WEIGHT_MIDDLE = 42
+    MOBILITY_WEIGHT_FINAL = 40
     
-    def get_positional_weight(self, available_positions):
-        return available_positions
-    
-    def get_difference_weight(self, available_positions):
-        return self.DIFFERENCE_WEIGHT* (1- available_positions)
-    
-    def get_mobility_weight(self, available_positions):
-        return self.MOBILITY_WEIGHT*available_positions
-    
-    def get_stability_weight(self, available_positions):
-        return self.STABILITY_WEIGHT*(1-available_positions)
-    
-    def evaluation_function(self, state: TwoPlayerGameState):
-        return self.my_evaluation_function(state)
-    
-class RochocolateCaliente(WeighedMatrixSolution, StudentHeuristic):
+    STABILITY_WEIGHT_INITIAL = 4
+    STABILITY_WEIGHT_MIDDLE = 25
+    STABILITY_WEIGHT_FINAL = 14
 
-    DIFFERENCE_WEIGHT = 3
+    POSITIONAL_WEIGHT_INITIAL = 30
+    POSITIONAL_WEIGHT_MIDDLE = 20
+    POSITIONAL_WEIGHT_FINAL = 15
 
-    MOBILITY_WEIGHT_INITIAL = 4
-    MOBILITY_WEIGHT_FINAL = 1
-    
-    STABILITY_WEIGHT_INITIAL = 1
-    STABILITY_WEIGHT_FINAL = 6
+    FIRST_TIME = 0.4
+    MIDDLE_TIME = 0.75
 
     UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 0]])
     INSIDE_MATRIX_WEIGHTS = 0
 
     def get_name(self) -> str:
-        return "Rochocolate caliente"
+        return "Rochinpon"
     
     def get_positional_weight(self, available_positions):
-        return available_positions
+        t = (1 - available_positions)
+        return self.POSITIONAL_WEIGHT_INITIAL + (self.POSITIONAL_WEIGHT_MIDDLE - self.POSITIONAL_WEIGHT_INITIAL)*(t/self.FIRST_TIME) if t <= self.FIRST_TIME else self.POSITIONAL_WEIGHT_MIDDLE + (self.POSITIONAL_WEIGHT_FINAL - self.POSITIONAL_WEIGHT_MIDDLE)*((t-self.FIRST_TIME)/(self.MIDDLE_TIME-self.FIRST_TIME)) if t <= self.MIDDLE_TIME else self.POSITIONAL_WEIGHT_FINAL
     
     def get_difference_weight(self, available_positions):
-        return self.DIFFERENCE_WEIGHT * (1 - available_positions)**4
+        return self.DIFFERENCE_WEIGHT_INITIAL * (1 - available_positions)**4
     
     def get_mobility_weight(self, available_positions):
-        return self.MOBILITY_WEIGHT_FINAL + available_positions*(self.MOBILITY_WEIGHT_INITIAL - self.MOBILITY_WEIGHT_FINAL)
+        t = (1 - available_positions)
+        return self.MOBILITY_WEIGHT_INITIAL + (self.MOBILITY_WEIGHT_MIDDLE - self.MOBILITY_WEIGHT_INITIAL)*(t/self.FIRST_TIME) if t <= self.FIRST_TIME else self.MOBILITY_WEIGHT_MIDDLE + (self.MOBILITY_WEIGHT_FINAL - self.MOBILITY_WEIGHT_MIDDLE)*((t-self.FIRST_TIME)/(self.MIDDLE_TIME-self.FIRST_TIME)) if t <= self.MIDDLE_TIME else self.MOBILITY_WEIGHT_FINAL
     
     def get_stability_weight(self, available_positions):
-        return self.STABILITY_WEIGHT_FINAL + available_positions*(self.STABILITY_WEIGHT_INITIAL - self.STABILITY_WEIGHT_FINAL)
+        t = (1 - available_positions)
+        return self.STABILITY_WEIGHT_INITIAL + (self.STABILITY_WEIGHT_MIDDLE - self.STABILITY_WEIGHT_INITIAL)*(t/self.FIRST_TIME) if t <= self.FIRST_TIME else self.STABILITY_WEIGHT_MIDDLE + (self.STABILITY_WEIGHT_FINAL - self.STABILITY_WEIGHT_MIDDLE)*((t-self.FIRST_TIME)/(self.MIDDLE_TIME-self.FIRST_TIME)) if t <= self.MIDDLE_TIME else self.STABILITY_WEIGHT_FINAL    
     
     def evaluation_function(self, state: TwoPlayerGameState):
         # Get the players labels and scores
@@ -423,3 +363,105 @@ class RochocolateCaliente(WeighedMatrixSolution, StudentHeuristic):
         score += self.get_stability_weight(available_positions) * stability_score
         
         return score
+
+class Rochingona(WeighedMatrixSolution, StudentHeuristic):
+
+    DIFFERENCE_WEIGHT_INITIAL = 11
+    DIFFERENCE_WEIGHT_MIDDLE = 5
+    DIFFERENCE_WEIGHT_FINAL = 5
+
+    MOBILITY_WEIGHT_INITIAL = 20
+    MOBILITY_WEIGHT_MIDDLE = 40
+    MOBILITY_WEIGHT_FINAL = 45
+    
+    STABILITY_WEIGHT_INITIAL = 5
+    STABILITY_WEIGHT_MIDDLE = 33
+    STABILITY_WEIGHT_FINAL =14
+
+    POSITIONAL_WEIGHT_INITIAL = 27
+    POSITIONAL_WEIGHT_MIDDLE = 11
+    POSITIONAL_WEIGHT_FINAL = 39
+
+    FIRST_TIME = 0.4
+    MIDDLE_TIME = 0.65
+
+    UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 0]])
+    INSIDE_MATRIX_WEIGHTS = 0
+
+    def get_name(self) -> str:
+        return "Rochingona"
+    
+    def get_positional_weight(self, available_positions):
+        t = (1 - available_positions)
+        return self.POSITIONAL_WEIGHT_INITIAL + (self.POSITIONAL_WEIGHT_MIDDLE - self.POSITIONAL_WEIGHT_INITIAL)*(t/self.FIRST_TIME) if t <= self.FIRST_TIME else self.POSITIONAL_WEIGHT_MIDDLE + (self.POSITIONAL_WEIGHT_FINAL - self.POSITIONAL_WEIGHT_MIDDLE)*((t-self.FIRST_TIME)/(self.MIDDLE_TIME-self.FIRST_TIME)) if t <= self.MIDDLE_TIME else self.POSITIONAL_WEIGHT_FINAL
+    
+    def get_difference_weight(self, available_positions):
+        return self.DIFFERENCE_WEIGHT_INITIAL * (1 - available_positions)**4
+    
+    def get_mobility_weight(self, available_positions):
+        t = (1 - available_positions)
+        return self.MOBILITY_WEIGHT_INITIAL + (self.MOBILITY_WEIGHT_MIDDLE - self.MOBILITY_WEIGHT_INITIAL)*(t/self.FIRST_TIME) if t <= self.FIRST_TIME else self.MOBILITY_WEIGHT_MIDDLE + (self.MOBILITY_WEIGHT_FINAL - self.MOBILITY_WEIGHT_MIDDLE)*((t-self.FIRST_TIME)/(self.MIDDLE_TIME-self.FIRST_TIME)) if t <= self.MIDDLE_TIME else self.MOBILITY_WEIGHT_FINAL
+    
+    def get_stability_weight(self, available_positions):
+        t = (1 - available_positions)
+        return self.STABILITY_WEIGHT_INITIAL + (self.STABILITY_WEIGHT_MIDDLE - self.STABILITY_WEIGHT_INITIAL)*(t/self.FIRST_TIME) if t <= self.FIRST_TIME else self.STABILITY_WEIGHT_MIDDLE + (self.STABILITY_WEIGHT_FINAL - self.STABILITY_WEIGHT_MIDDLE)*((t-self.FIRST_TIME)/(self.MIDDLE_TIME-self.FIRST_TIME)) if t <= self.MIDDLE_TIME else self.STABILITY_WEIGHT_FINAL    
+    
+    def evaluation_function(self, state: TwoPlayerGameState):
+        # Get the players labels and scores
+        player_label, opp_label, player_score, opp_score = self.get_players_label_and_score(state)
+
+        # Calculate the difference score
+        difference_score = (player_score - opp_score)/(player_score + opp_score) if (player_score + opp_score) > 0 else 0
+
+        # Calculate the positional score
+        player_positional_score, opp_positional_score = self.get_positional_score(state, player_label)
+        positional_score = (player_positional_score - opp_positional_score)/(player_positional_score + opp_positional_score) if (player_positional_score + opp_positional_score) > 0 else 0
+
+        # Calculate the mobility score
+        player_moves, opp_moves = self.get_mobility_score(state, player_label, opp_label)
+        mobility_score = (player_moves - opp_moves)/(player_moves + opp_moves) if (player_moves + opp_moves) > 0 else 0
+
+        # Get the relative available positions
+        available_positions = self.get_relative_available_positions(state, player_score, opp_score)
+
+        # Get the stability score
+        stability_score = self.get_stability(state, player_label, opp_label)
+        
+        # Compute the score
+        score =  self.get_difference_weight(available_positions) * difference_score
+        score +=  self.get_positional_weight(available_positions) * positional_score
+        score +=  self.get_mobility_weight(available_positions) * mobility_score
+        score += self.get_stability_weight(available_positions) * stability_score
+        
+        return score
+    
+class Rochingada(WeighedMatrixSolution, StudentHeuristic):
+
+    DIFFERENCE_WEIGHT = 3
+
+    MOBILITY_WEIGHT_INITIAL = 4
+    MOBILITY_WEIGHT_FINAL = 1
+    
+    STABILITY_WEIGHT_INITIAL = 1
+    STABILITY_WEIGHT_FINAL = 6
+
+    UPPER_LEFT_CORNER_MATRIX_WEIGHTS = np.array([[50, -20, 10], [-20, -30, 5], [10, 5, 0]])
+    INSIDE_MATRIX_WEIGHTS = 0
+
+    def get_name(self) -> str:
+        return "Rochingada"
+    
+    def get_positional_weight(self, available_positions):
+        return available_positions
+    
+    def get_difference_weight(self, available_positions):
+        return self.DIFFERENCE_WEIGHT * (1 - available_positions)**4
+    
+    def get_mobility_weight(self, available_positions):
+        return self.MOBILITY_WEIGHT_FINAL + available_positions*(self.MOBILITY_WEIGHT_INITIAL - self.MOBILITY_WEIGHT_FINAL)
+    
+    def get_stability_weight(self, available_positions):
+        return self.STABILITY_WEIGHT_FINAL + available_positions*(self.STABILITY_WEIGHT_INITIAL - self.STABILITY_WEIGHT_FINAL)
+    
+    def evaluation_function(self, state):
+        return super().my_evaluation_function(state)
