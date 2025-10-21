@@ -15,7 +15,6 @@ from reversi import (Reversi, from_array_to_dictionary_board,)
 from strategy import (ManualStrategy, MinimaxAlphaBetaStrategy,
                       MinimaxStrategy, RandomStrategy)
 
-from tournament import Tournament
 player_manual = Player(
     name='Manual',
     strategy=ManualStrategy(verbose=0),
@@ -76,11 +75,11 @@ player_alphabeta2 = Player(
 )
 
 ## If you want to play against one of your heuristics, you should do the following
-from p1_1313_12_Martin_Fernandez import Solution1  # import your StudentHeuristic here
+from p2_gggg_mm_apellido1_apellido2 import Solution1  # import your StudentHeuristic here
 my_heuristic = Solution1() # instantiate your heuristic here
 my_player = Player(
     name=my_heuristic.get_name(),
-    strategy=MinimaxAlphaBetaStrategy(  # MinimaxAlphaBetaStrategy(
+    strategy=MinimaxStrategy(  # MinimaxAlphaBetaStrategy(
         heuristic=Heuristic(name=my_heuristic.get_name(), 
                             evaluation_function=my_heuristic.evaluation_function),
         max_depth_minimax=3,
@@ -91,13 +90,13 @@ my_player = Player(
 
 
 # Manual vs manual player
-#player_a, player_b = player_manual, player_manual2
+# player_a, player_b = player_manual, player_manual2
 
 # Manual vs minimax player
-player_a, player_b = my_player, player_manual
+# player_a, player_b = player_manual, player_minimax4
 
 # minimax alpha-beta vs minimax alpha-beta player
-#player_a, player_b = player_minimax4, player_minimax3
+player_a, player_b = player_minimax4, player_minimax3
 
 # minimax alpha-beta vs minimax alpha-beta player
 # player_a, player_b = player_alphabeta1, player_alphabeta2
@@ -110,8 +109,13 @@ E.g., it can be an intermediate state.
 initial_player = player_a  # Player who moves first.
 
 # Board at an intermediate state of the game.
-initial_board = None
-
+initial_board = (
+    ['..B.B..',
+     '.WBBW..',
+     'WBWBB..',
+     '.W.WWW.',
+     '.BBWBWB']
+)
 
 # NOTE Uncoment to use standard initial board.
 # initial_board = None  # Standard initial board.
@@ -121,7 +125,6 @@ if initial_board is None:
 else:
     height = len(initial_board)
     width = len(initial_board[0])
-    print(height, width)
     try:
         initial_board = from_array_to_dictionary_board(initial_board)
     except ValueError:
@@ -148,7 +151,7 @@ game_state = TwoPlayerGameState(
 # Initialize a match.
 match = TwoPlayerMatch(
     game_state,
-    max_seconds_per_move=10,
+    max_seconds_per_move=1000,
     gui=True,
 )
 
