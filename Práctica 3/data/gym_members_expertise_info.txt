@@ -1,0 +1,21 @@
+
+Archivo descriptivo del dataset: gym_members_expertise
+
+ - id: Identificador único del miembro del gimnasio.
+ - Age: Edad del miembro.
+ - Gender: Género del miembro.
+ - Weight (kg): Peso en kilogramos.
+ - Height (m): Altura en metros.
+ - Max_BPM: Frecuencia cardíaca máxima.
+ - Avg_BPM: Frecuencia cardíaca promedio.
+ - Resting_BPM: Frecuencia cardíaca en reposo.
+ - Session_Duration (hours): Duración de la sesión en horas.
+ - Calories_Burned: Calorías quemadas durante la sesión.
+ - Workout_Type: Tipo de entrenamiento realizado.
+ - Fat_Percentage: Porcentaje de grasa corporal.
+ - Water_Intake (liters): Consumo de agua en litros.
+ - Workout_Frequency (days/week): Frecuencia de entrenamiento por semana.
+ - BMI: Índice de masa corporal.
+ - ExpertiseLevel: Nivel de experiencia en entrenamiento (clase objetivo).
+     1, 2 o 3.
+

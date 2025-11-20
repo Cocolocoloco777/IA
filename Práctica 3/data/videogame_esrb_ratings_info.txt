@@ -1,0 +1,36 @@
+
+Archivo descriptivo del dataset: videogame_esrb_ratings
+
+ - id: Identificador único del videojuego.
+ - alcohol_reference: Referencias al alcohol en el juego.
+ - blood_or_gore: Presencia de sangre o gore.
+ - cartoon_violence: Hay escenas violentas realiadas con dibujos animados.
+ - crude_humor: Representaciones o diálogos que incluyan payasadas vulgares.
+ - drug_reference: Hay referencia a drogas.
+ - fantasy_violence: Hay violencia de naturaleza fantástica.
+ - intense_violence: Hay violencia realista.
+ - language: Uso moderado de blasfemias.
+ - lyrics: Referencias a blasfemias, sexualidad, violencia, alcohol o consumo de drogas en la música.
+ - mild_blood: Presencia leve de sangre.
+ - mild_cartoon_violence: Hay escenas violentas realiadas con dibujos animados leves.
+ - mild_fantasy_violence: Hay violencia de naturaleza fantástica leve.
+ - mild_language: Leve uso moderado de blasfemias.
+ - mild_lyrics: Referencias a blasfemias, sexualidad, violencia, alcohol o consumo de drogas en la música, de forma leve.
+ - mild_suggestive_themes: Hay algunas referencias o materiales provocativos.
+ - mild_violence: Hay algunas escenas o referencias violentas.
+ - no_descriptors: Sin descriptores de contenido.
+ - sexual_content: Hay contenido sexual.
+ - sexual_themes: Hay referencias sexuales.
+ - simulated_gambling: Se puede apostar en juegos de azar sin usar dinero real.
+ - strong_language: Uso frecuente de blasfemias.
+ - strong_sexual_content: Hay contenido sexual frecuente.
+ - suggestive_themes: Referencias o materiales provocativos.
+ - violence: Hay escenas violentas.
+
+ - esrb_rating: Calificación ESRB del juego (clase objetivo).
+
+    0: M (Mature)
+    1: E (Everyone)
+    2: T (Teen)
+    3: ET (Early Childhood)
+

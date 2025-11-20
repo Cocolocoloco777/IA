@@ -1,0 +1,19 @@
+
+Archivo descriptivo del dataset: pet_adoption
+
+ - id: Identificador único de la mascota.
+ - PetType: Tipo de mascota (perro, gato, etc.).
+ - Breed: Raza de la mascota.
+ - AgeMonths: Edad en meses.
+ - Color: Color del pelaje.
+ - Size: Tamaño de la mascota.
+ - Weight (Kg): Peso en kilogramos.
+ - Vaccinated: Indica si la mascota está vacunada.
+ - HealthCondition: Condición de salud actual.
+ - TimeInShelterDays: Tiempo en el refugio en días.
+ - AdoptionFee: Tarifa de adopción.
+ - PreviousOwner: Indica si tuvo un dueño previo.
+ - Adopted: Indica si la mascota fue adoptada (clase objetivo).
+    0: No adoptado
+    1: Adoptado
+
