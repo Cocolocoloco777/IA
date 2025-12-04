@@ -37,3 +37,7 @@ donde DATASETNAME es el conjunto de datos elegido en el apartado 4. Las posibili
  - gym_members_expertise
  - videogame_esrb_ratings
 
+
+
+
+jupyter-nbconvert
